@@ -212,12 +212,18 @@ export default function AddPetForm() {
   );
 
   const faltanCampos =
-    !form.nombre ||
-    !form.edad ||
-    !form.sexo ||
-    !form.shelterId ||
-    !form.tipo ||
-    !form.raza;
+  !form.nombre ||
+  !form.edad ||
+  !form.edadUnidad ||
+  !form.sexo ||
+  !form.tamaño ||
+  !form.tipo ||
+  !form.descripcion ||
+  !form.llegada ||
+  !form.entryDate ||
+  !form.reviewDate ||
+  !form.shelterId ||
+  form.peso === "" || form.peso === null;
 
   const renderStep = () => {
     switch (step) {
