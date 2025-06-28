@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import "tailwindcss";
+@plugin 'tailwind-scrollbar';
+
+
+
+html, body, #root {
+  height: 100%;
+}
+
+@layer base {
+  html {
+    font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  }
+  :root {
+    --azulito:      #5BA0D3;
+    --celestito:    #D7E4F2;
+    --moradito:     #E4CFEF;
+    --anaranjadito: #FFD7C4;
+    --rosadito:     #FDE1E4;
+    --amarillito:   #FEF3E2;
+    --blanquito:    #FFFFFF;
+    --negrito:      #000000;
+    --grisito:      #AEACAC;
+    --amarillito2:  #FFF5EE;
+  }
+}
+
+@layer utilities {
+  .bg-azulito       { background-color: var(--azulito) }
+  .bg-celestito     { background-color: var(--celestito) }
+  .bg-moradito      { background-color: var(--moradito) }
+  .bg-anaranjadito  { background-color: var(--anaranjadito) }
+  .bg-rosadito      { background-color: var(--rosadito) }
+  .bg-amarillito    { background-color: var(--amarillito) }
+  .bg-blanquito     { background-color: var(--blanquito) }
+  .bg-negrito       { background-color: var(--negrito) }
+  .bg-grisito       { background-color: var(--grisito) }
+  .bg-amarillito2   { background-color: var(--amarillito2)}
+
+  .text-azulito       { color: var(--azulito) }
+  .text-celestito     { color: var(--celestito) }
+  .text-moradito      { color: var(--moradito) }
+  .text-anaranjadito  { color: var(--anaranjadito) }
+  .text-rosadito      { color: var(--rosadito) }
+  .text-amarillito    { color: var(--amarillito) }
+  .text-blanquito     { color: var(--blanquito) }
+  .text-negrito       { color: var(--negrito) }
+  .text-grisito       { color: var(--grisito) }
+  .text-amarillito2   { color: var(--amarillito2)}
+
+}
+
