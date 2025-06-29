@@ -9,6 +9,7 @@ import useWizard from "../hooks/useWizard.js";
 import api from "../services/api.js";
 import { PawPrint, Ruler, Stethoscope, Eye, BookText } from "lucide-react";
 import { toast } from "react-toastify";
+import { uploadImage } from "../services/imageService";
 
 export default function EditPet() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function EditPet() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [form, setForm] = useState({
-    photoURL: "",
+    photoUrl: "",
     nombre: "",
     edad: "",
     edadUnidad: "",
@@ -62,10 +63,34 @@ export default function EditPet() {
             api.get("/pet_attributes/all"),
           ]);
         setSpecies(speciesRes.data);
-        setSizes(sizesRes.data);
+
         setGenders(gendersRes.data);
         setShelters(sheltersRes.data);
         setAttributes(attributesRes.data);
+        setSizes(
+          sizesRes.data.map((s) => {
+            let numericValue;
+
+            switch (s.value?.toUpperCase()) {
+              case "PEQUEÑO":
+                numericValue = 1;
+                break;
+              case "MEDIANO":
+                numericValue = 2;
+                break;
+              case "GRANDE":
+                numericValue = 3;
+                break;
+              default:
+                numericValue = null; // o lanzar advertencia
+            }
+
+            return {
+              label: s.label,
+              value: numericValue
+            };
+          })
+        );
       } catch (error) {
         console.error("Error cargando catálogos:", error);
         toast.error("Error al cargar catálogos. Intenta de nuevo.");
@@ -80,8 +105,8 @@ export default function EditPet() {
       try {
         const { data: pet } = await api.get(`/pets/${id}`);
         setForm({
-           imageId: pet.imageId || null,
-            photoURL: pet.photoURL || "",
+          imageId: pet.imageId || null,
+          photoUrl: pet.photoUrl || "",
           nombre: pet.name || "",
           edad: pet.ageValue?.toString() || "",
           edadUnidad: pet.ageUnit || "",
@@ -163,8 +188,8 @@ export default function EditPet() {
       reviewDate: form.reviewDate,
       description: form.descripcion,
       history: form.llegada,
-       imageId: form.imageId || null, 
-      photoURL: form.photoURL || null,
+      imageId: form.imageId || null,
+      photoUrl: form.photoUrl || null,
       shelterId: parseInt(form.shelterId),
       speciesId: parseInt(form.tipo),
       sizeId: parseInt(form.tamaño),
@@ -172,7 +197,6 @@ export default function EditPet() {
       petAttributeIds: form.petAttributeIds.map((id) => parseInt(id)),
     };
 
-   
     try {
       console.log("Payload a enviar:", payload);
       console.log("ID:", id);
@@ -191,8 +215,7 @@ export default function EditPet() {
         error
       );
       toast.error(
-        `Error al actualizar: ${error.response?.status} ${
-          error.response?.data?.message || error.message
+        `Error al actualizar: ${error.response?.status} ${error.response?.data?.message || error.message
         }`
       );
     }
@@ -246,41 +269,47 @@ export default function EditPet() {
             </div>
             <div className="grid grid-cols-2 gap-6">
               <div className="col-span-2">
-  <label className="block text-sm font-semibold text-negrito mb-1">
-    Nombre de la Foto <span className="text-red-600 font-bold">*</span>
-  </label>
-  <input
-    type="file"
-    accept="image/*"
-    onChange={async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-        const { data } = await api.post("/image/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        setForm((prev) => ({
-          ...prev,
-          photoURL: data.imgURL,
-          imageId: data.id,
-        }));
-        toast.success("Imagen subida con éxito");
-      } catch (error) {
-        toast.error("Error al subir imagen");
-        console.error(error);
-      }
-    }}
-  />
-  {form.photoURL && (
-    <img
-      src={form.photoURL}
-      alt="Imagen de la mascota"
-      className="w-32 h-32 mt-2 rounded-xl object-cover border border-gray-300 shadow"
-    />
-  )}
-</div>
+
+                <label className="block text-sm font-semibold text-negrito mb-1">
+                  Imagen actual
+                </label>
+
+                <div className="w-32 h-32 rounded-xl overflow-hidden border border-gray-300 shadow">
+                  <img
+                    src={form.photoUrl || "/default-pet.jpg"}
+                    alt="Imagen de la mascota"
+                    onError={(e) => (e.target.src = "/default-pet.jpg")}
+                    className="w-full h-full object-cover"
+                  />
+
+                </div>
+                <label className="block text-sm font-semibold text-negrito mb-1">
+                  Cambiar imagen
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="mt-1"
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    try {
+                      const data = await uploadImage(file);
+                      setForm((prev) => ({
+                        ...prev,
+                        photoUrl: data.imgURL, // que viene del servicio
+                        imageId: data.id,
+                      }));
+                      toast.success("Imagen actualizada con éxito");
+                    } catch (error) {
+                      toast.error("Error al subir imagen");
+                      console.error(error);
+                    }
+                  }}
+                />
+
+              </div>
 
 
               <div>
@@ -600,8 +629,8 @@ export default function EditPet() {
                         const updated = isChecked
                           ? [...form.petAttributeIds, attr.id.toString()]
                           : form.petAttributeIds.filter(
-                              (id) => id !== attr.id.toString()
-                            );
+                            (id) => id !== attr.id.toString()
+                          );
                         setForm((prev) => ({
                           ...prev,
                           petAttributeIds: updated,
@@ -632,7 +661,7 @@ export default function EditPet() {
             <div className="flex bg-gradient-to-r from-pink-200 via-rosadito to-pink-100 rounded-3xl shadow-2xl w-full max-w-4xl mx-auto overflow-hidden border border-pink-300">
               <div className="bg-white p-4 flex items-center justify-center flex-shrink-0 w-52 h-52 m-4">
                 <img
-                  src={form.photoURL || "https://via.placeholder.com/150"}
+                  src={form.photoUrl || "https://via.placeholder.com/150"}
                   alt={form.nombre || "preview"}
                   className="w-full h-full object-cover rounded-xl"
                 />
@@ -640,9 +669,8 @@ export default function EditPet() {
 
               <div className="p-6 flex flex-col gap-4 text-sm text-gray-700 flex-1 overflow-hidden">
                 <h3
-                  className={`text-2xl font-extrabold ${
-                    !form.nombre ? "text-red-500" : "text-negrito"
-                  }`}
+                  className={`text-2xl font-extrabold ${!form.nombre ? "text-red-500" : "text-negrito"
+                    }`}
                 >
                   {form.nombre || "Nombre pendiente"}
                 </h3>
@@ -657,8 +685,8 @@ export default function EditPet() {
                       {form.edadUnidad === "AÑOS"
                         ? "año(s)"
                         : form.edadUnidad === "MESES"
-                        ? "mes(es)"
-                        : ""}
+                          ? "mes(es)"
+                          : ""}
                     </span>
                   </p>
                   <p>
@@ -815,11 +843,10 @@ export default function EditPet() {
         <div key={n} className="flex flex-col items-center">
           <div
             className={`w-9 h-9 flex items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-200
-          ${
-            n <= step
-              ? "bg-moradito text-white border-moradito shadow-lg"
-              : "bg-white border-gray-300 text-gray-400"
-          }`}
+          ${n <= step
+                ? "bg-moradito text-white border-moradito shadow-lg"
+                : "bg-white border-gray-300 text-gray-400"
+              }`}
           >
             {n}
           </div>
@@ -890,11 +917,10 @@ export default function EditPet() {
                 type="submit"
                 disabled={isSubmitting}
                 className={`px-6 py-2 rounded-full font-medium shadow-md transition-all duration-200 cursor-pointer text-white
-                ${
-                  isSubmitting
+                ${isSubmitting
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-azulito hover:bg-sky-600"
-                }`}
+                  }`}
               >
                 {isSubmitting ? "Guardando cambios..." : "Guardar cambios"}
               </button>
